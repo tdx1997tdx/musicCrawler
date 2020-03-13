@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>音乐下载工具</title>
-    <link rel="stylesheet" href="./lib/bootstrap.css">
-    <script src="./lib/vue.js"></script>
-    <script src="./lib/axios.js"></script>
+    <link rel="stylesheet" href="./static/lib/bootstrap/css/bootstrap.css">
+    <script src="./static/lib/vue.js"></script>
+    <script src="./static/lib/axios.min.js"></script>
     <style>
         * {
             margin: 0px;
@@ -33,12 +33,24 @@
             <button type="button" class="btn btn-primary" v-on:click="search">搜索</button>
         </form>
         <hr />
+        <div class="form-inline text-center">
+            <audio id="myAudio" src="#" controls>
+            </audio>
+        </div>
+        <div class="form-inline text-center">
+            <button type="button" class="btn btn-primary" v-on:click="next()">下一首</button>
+            <button type="button" class="btn btn-primary" v-on:click="pre()">上一首</button>
+            <button type="button" class="btn btn-primary" v-on:click="download()">下载该曲</button>
+            <label>当前播放第{{nowId+1}}个曲目</label>
+        </div>
+        <hr />
         <table class="table table-hover .table-bordered">
             <thead>
                 <tr>
                     <th>id</th>
                     <th>歌曲名</th>
                     <th>作者</th>
+                    <th>来源</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -47,8 +59,9 @@
                     <td>{{i+1}}</td>
                     <td>{{item.name}}</td>
                     <td>{{item.author}}</td>
+                    <td>{{item.source}}</td>
                     <td>
-                        <a :href="item.url" target="_blank">试听</a>
+                        <a href="#" v-on:click="listening_test(i)">试听</a>
                         <a href="#" v-on:click="download(i)">下载</a>
                     </td>
                 </tr>
@@ -64,10 +77,24 @@
                 music_list: [{
                     name: 'tdx',
                     author: 'tdx',
-                    url: 'http://www.baidu.com'
-                }]
+                    url_id: 123,
+                    source: 'kugou'
+                }],
+                nowId: 0
             },
             methods: {
+                next() {
+                    if (this.nowId < this.music_list.length) {
+                        this.nowId += 1
+                    }
+                    this.listening_test(this.nowId)
+                },
+                pre() {
+                    if (this.nowId > 0) {
+                        this.nowId -= 1
+                    }
+                    this.listening_test(this.nowId)
+                },
                 async search() {
                     var list = []
                     await axios({
@@ -86,11 +113,14 @@
                         .catch(function(error) {
                             console.log(error);
                         })
-                    console.log(list)
                     this.music_list = list
+                    alert("搜索完成")
+                    this.pre()
                 },
                 async download(i) {
-                    console.log(i, this.music_list[i])
+                    if (i == null) {
+                        i = this.nowId
+                    }
                     var msg = ''
                     await axios({
                             url: '/download',
@@ -108,7 +138,35 @@
                     if (msg.state == '1') {
                         alert("下载完成")
                     } else {
-                        alert("下载失败")
+                        alert("下载失败,该歌曲不支持下载")
+                    }
+
+                },
+                async listening_test(i) {
+                    var url = ''
+                    this.nowId = i
+                    await axios({
+                            url: '/listening_test',
+                            method: 'post',
+                            data: this.music_list[i],
+                            headers: {
+                                "Content-Type": "application/json;"
+                            }
+                        }).then(function(response) {
+                            url = response.data['url']
+                        })
+                        .catch(function(error) {
+                            console.log(error);
+                        })
+                    if (url == '') {
+                        alert("歌曲没有版权，不能下载试听")
+                    } else {
+                        var myAudio = document.getElementById('myAudio');
+                        myAudio.src = url;
+                        myAudio.play();
+                        myAudio.loop = true;
+                        myAudio.preload = true;
+                        myAudio.currentTime
                     }
 
                 }

@@ -1,23 +1,8 @@
 from flask import Flask, json, request, jsonify
-from driver import MusicDriver
+from container import Container
 from download import Download
 
-app = Flask(__name__)
-
-
-@app.route('/lib/bootstrap.css')
-def bootstrap():
-    return app.send_static_file('lib/bootstrap.css')
-
-
-@app.route('/lib/vue.js')
-def vue():
-    return app.send_static_file('lib/vue.js')
-
-
-@app.route('/lib/axios.js')
-def axios():
-    return app.send_static_file('lib/axios.js')
+app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/static')
 
 
 @app.route('/')
@@ -30,9 +15,8 @@ def search():
     data = json.loads(request.get_data(as_text=True))
     name = data['name']
     author = data['author']
-    music_driver = MusicDriver(name, author)
-    all_music = music_driver.get_all_music()
-    music_driver.close()
+    con = Container(name, author)
+    all_music = con.get_music()
     ret = {'music_list': all_music}
     return jsonify(ret)
 
@@ -40,14 +24,29 @@ def search():
 @app.route('/download', methods=['POST'])
 def download():
     data = json.loads(request.get_data(as_text=True))
-    print(data)
-    url = data['url']
+    url_id = data['url_id']
     name = data['name']
     author = data['author']
-    d = Download(name, author,url)
-    d.dowmload()
-    d.save()
-    ret = {'state': 1}
+    source = data['source']
+    d = Download(name, author, url_id, source)
+    is_ok = d.download()
+    if is_ok:
+        ret = {'state': 1}
+    else:
+        ret = {'state': 0}
+    return jsonify(ret)
+
+
+@app.route('/listening_test', methods=['POST'])
+def listening_test():
+    data = json.loads(request.get_data(as_text=True))
+    url_id = data['url_id']
+    name = data['name']
+    author = data['author']
+    source = data['source']
+    d = Download(name, author, url_id, source)
+    url = d.listening_test()
+    ret = {'url': url}
     return jsonify(ret)
 
 

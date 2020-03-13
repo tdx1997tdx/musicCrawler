@@ -9,14 +9,12 @@
 # 实现工具框架
 
 1. flask：轻量级python后端框架。
-2. seleium：python自动化框架,用于爬取数据。
-3. chormedriver：浏览器驱动引擎。
-4. vue：js的mvvm框架。
-5. bootstrap：css组件模块。
+2. vue：js的mvvm框架。
+3. bootstrap：css组件模块。
 
 # 实现思路
 
-1. 爬取https://music.sounm.com/数据，包括所有源头。
+1. 爬取http://music.lkxin.cn/数据，包括所有源头。
 2. 将匹配的信息传给前端浏览器。
 3. 可以试听，如果满意直接点击下载，歌曲自动下载到F://download文件夹下，已自动命名。
 
